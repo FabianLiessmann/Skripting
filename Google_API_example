@@ -1,0 +1,52 @@
+"""This is from another project, where I tried to map all labs from a webpage onto a world map
+In theory this concept can easily be adapted for the observatories as well
+This project was written in jupyter notebook"""
+
+import pandas as pd
+import geopy
+from geopy.geocoders import GoogleV3
+import folium
+import json
+import requests
+#import all needed libs
+
+addresses = []
+for lines in open('adhesion_address.list', 'r').readlines():
+    addresses.append(lines)
+print(addresses[1])
+example = ''.join(addresses[2])
+print(example)
+#read in all addresses (example Laboratory of Molecular Signaling National Institute on Alcohol Abuse and Alcoholism National Institutes of Health 5625 Fishers Lane Rockville, MD 20852  USA)
+
+API = "NEED TO BE CREATED"
+for line in addresses:
+    try:
+        address = ''.join(line[:-1])
+        params = {
+            'key': API,
+            'address' : address
+        }
+        base_url = 'https://maps.googleapis.com/maps/api/geocode/json?'
+        response = requests.get(base_url, params=params).json()
+        response.keys()
+        geo = response['results'][0]['geometry']
+        lat = geo['location']['lat']
+        lon = geo['location']['lng']
+        print(address, lat, lon, sep='\t')
+    except:
+        print(address)
+print('if error or not possibl: https://www.gps-coordinates.net/gps-coordinates-converter')
+#converts the address to lat, long datas with google API, need to create an acc first
+#currently, just prints the data, needs to add a file and print in file
+
+df = pd.read_csv('adhesion_address_final.list', sep='\t')
+with open('world.geo.json') as f:
+    world = json.load(f)
+#reads in the final list as df
+
+world = folium.Map(location=[51.340199,12.360103], tiles='Stamen Toner', zoom_start=7)
+for i,row in df.iterrows():
+    folium.CircleMarker((row.Lat,row.Lon), radius=5, weight=5, color='red', fill_color='red', fill_opacity=.5).add_to(world)
+    print(row.Address)
+world.save('world.html')
+#map onto the provided world map
